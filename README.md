@@ -1,2 +1,0 @@
-# PeopleSoft
-Peoplesoft Peoplecodes

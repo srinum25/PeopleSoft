@@ -1,0 +1,89 @@
+
+#include 'setenv.sqc'    !Set environment
+#include 'setup32.sqc'   !Setup for landscape report
+!#include 'reset.sqc'     !Reset printer procedure
+#include 'curdttim.sqc'  !Get-Current-DateTime procedure
+#include 'datetime.sqc'  !Init-Datetime procedure for date and time formatting
+#include 'number.sqc'    !Init-Number procedure to format numbers
+#include 'stdapi.sqc'    !StdAPI-Init procedure to update Process API
+#include 'getlogou.sqc'  !To post files to the report repository
+
+begin-heading 6
+	print 'TICKET INFORMATION' (1,1) center bold underline
+	let $rundt = 'Date: ' || $current-date
+	print $rundt (+1,1)
+	let $status = 'Ticket Status: ' || $ticketstat
+	print $status (+2,1)
+	
+end-heading
+
+begin-program
+	Do Stdapi-Init 
+	do main
+	Do Stdapi-Term
+end-program
+
+
+begin-procedure main
+	do select-RunParameter	
+	do Ticket_heading
+end-procedure main
+
+
+begin-procedure select-RunParameter
+begin-select 
+r.sm_ticket_status
+	move &r.sm_ticket_status to $tktsta
+px.xlatlongname
+	move &px.xlatlongname to $ticketstat
+r.run_cntl_id
+	move &r.run_cntl_id to $run_cntl_id
+r.oprid
+	move &r.oprid to $oprid
+from ps_SM_RUN_CNTL_REC r, psxlatitem px
+where r.run_cntl_id=$prcs_run_cntl_id
+and r.oprid=$prcs_oprid
+and px.fieldname='sm_ticket_status'
+and px. fieldvalue=r.sm_ticket_status
+end-select
+
+end-procedure select-RunParameter
+
+
+begin-procedure select-TicketDetails
+begin-select 
+
+pn.sm_tkt_no  (+1,5,14) 
+pn.sm_desc  (,+2,20) wrap 20 3
+pn.sm_severity (,+4,9)
+pn.sm_priority (,+2,9)
+pn.sm_severity_type (,+2,15) wrap 15 3
+c.sm_actual_hours  (,+4,15)
+	position (+1)
+	
+from ps_sm_ticket_p pn,ps_sm_ticket_c c
+where pn.sm_tkt_no=c.sm_tkt_no
+and  c.sm_ticket_status=$tktsta
+
+order by to_number(c.sm_tkt_no)
+end-select
+end-procedure select-TicketDetails
+
+
+begin-procedure Ticket_heading
+	print '-' (+1,1,150) fill
+	print 'Ticket Number' (+1,1,14)
+	print 'Description' (,+2,20)
+	print 'Severity' (,+4,9)
+	print 'Priority' (,+2,9)
+	print 'Severity Type' (,+2,15)
+	print 'Actual Hour' (,+4,15)
+	print '-' (+1,1,150) fill
+	position (+1)
+	do select-TicketDetails
+end-procedure Ticket_heading
+
+begin-footing  1
+	page-number (,+100) 'Page '
+   	last-page   () ' of '
+end-footing
