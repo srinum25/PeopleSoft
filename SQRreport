@@ -1,3 +1,4 @@
+/*this code will generate SQRfile for Ticket information based on ticket number*/
 
 #include 'setenv.sqc'    !Set environment
 #include 'setup32.sqc'   !Setup for landscape report
